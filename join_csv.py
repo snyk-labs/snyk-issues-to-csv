@@ -20,5 +20,5 @@ for csv in csvs:
     df.reset_index(drop=True, inplace=True)
     x += 1
 
-print(f'Combining {x} Organization(s) Issues into {group_path}/combined.csv')
+print(f'Combining {x} Project(s) Issues into {group_path}/combined.csv')
 df.to_csv(f'{group_path}/combined.csv')

@@ -11,6 +11,8 @@ def process_org(org, client, date_path, the_date):
     if os.path.isdir(org_path) is not True:
         os.mkdir(org_path)
 
+    # This currently just gets all projects in an org, but the snyk library supports filtering by tags
+    # https://github.com/snyk-labs/pysnyk#projects 
     projects = client.organizations.get(org_id).projects.all()
 
     for p in projects:
@@ -31,14 +33,19 @@ def save_project_issues(p_id, client, org_id, project_csv, the_date):
     i_filter = {'filters':{'orgs':[org_id],'projects':[p_id]}}
     
     # this lets us get a total issue count so we can do pagination
+    # this is using the low level client of the snyk library
+    # https://github.com/snyk-labs/pysnyk#low-level-client
+    # combined with our reporting api endpoint:
+    # https://snyk.docs.apiary.io/#reference/reporting-api/issues/get-list-of-issues
+
     ireq = client.post(f'reporting/issues/?from={the_date}&to={the_date}&page=1&perPage=1&sortBy=issueTitle&order=asc&groupBy=issue', i_filter)
 
     total = ireq.json()['total']
 
-    per_page = 100
+    per_page = 250
     page_count = (total // per_page) + 1
 
-    project_issues = []
+    df = pd.DataFrame()
 
     for x in range(1,page_count+1):
         req = client.post(f'reporting/issues/?from={the_date}&to={the_date}&page={x}&perPage={per_page}&sortBy=issueTitle&order=asc&groupBy=issue', i_filter)
@@ -53,17 +60,18 @@ def save_project_issues(p_id, client, org_id, project_csv, the_date):
             y.pop('isFixed',None)
             y['issue.introducedDate'] = y['introducedDate']
             y.pop('introducedDate',None)
-
         
-        project_issues.extend(results)
+        df = df.append(pd.DataFrame.from_dict(results))
+        
+    #project_issues.extend(results)
 
-    df = pd.DataFrame.from_dict(project_issues)
+    df.reset_index(drop=True, inplace=True)
 
     if df.empty:
         print(f'{datetime.datetime.now()}: No issues for {p_id} from {org_id}')
     else:
-        print(df)
         print(f'{datetime.datetime.now()}: Saving issues from {p_id} to {project_csv}')
+        print(df)
         df.to_csv(project_csv,index=False)
 
 
@@ -71,7 +79,8 @@ snyktoken = os.environ['SNYK_TOKEN']
 
 snykgroup = os.environ['SNYK_GROUP']
 
-client = snyk.SnykClient(snyktoken, tries=6, delay=2, backoff=2)
+# this sets the session to include retries in case of api timeouts etc
+client = snyk.SnykClient(snyktoken, tries=3, delay=1, backoff=1)
 
 yesterday = datetime.datetime.now() - datetime.timedelta(days = 1)
 

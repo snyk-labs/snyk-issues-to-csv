@@ -1,9 +1,18 @@
 import os
 import sys
 import pandas as pd
+import datetime
 
+yesterday = datetime.datetime.now() - datetime.timedelta(days = 1)
+the_date = yesterday.strftime('%Y-%m-%d')
 
-group_path = sys.argv[1]
+cwd_path = os.getcwd()
+
+output_dir = os.environ.get('SNYK_OUTPUT_DIR', os.path.join(cwd_path, 'output'))
+
+snykgroup = os.environ['SNYK_GROUP']
+
+group_path = os.path.join(output_dir, f'{the_date}/group-{snykgroup}')
 
 if os.path.isdir(group_path) is not True:
     raise ValueError(f'No folder at the path {group_path}')

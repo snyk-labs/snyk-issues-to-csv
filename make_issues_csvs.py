@@ -76,7 +76,6 @@ def save_project_issues(p_id, client, org_id, project_csv, the_date):
 
 
 snyktoken = os.environ['SNYK_TOKEN']
-
 snykgroup = os.environ['SNYK_GROUP']
 
 # this sets the session to include retries in case of api timeouts etc
@@ -91,7 +90,7 @@ print(f'{datetime.datetime.now()}: Gathering all issues for all orgs with group 
 # Gets current working directory
 cwd_path = os.getcwd()
 
-output_dir = os.path.join(cwd_path, 'output')
+output_dir = os.environ.get('SNYK_OUTPUT_DIR', os.path.join(cwd_path, 'output'))
 
 if os.path.isdir(output_dir) is not True:
     os.mkdir(output_dir)

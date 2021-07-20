@@ -4,6 +4,17 @@ This is a python script that utilizes the PySnyk module along with the Pandas mo
 
 Pandas is used because the nature of issues and groups in Snyk being such that it could become a very large dataset, and Pandas has better large dataset handling than plain CSV libraries.
 
+## Makefile example
+
+Assuming you have make and Docker installed, after you export a snyk token with access to a specific group as `SNYK_TOKEN` and `SNYK_GROUP` respectively, run the following make commands:
+```
+make run_issues
+make run_join
+```
+The folder `output/date/group-SNYK_GROUP` will be created along with a combined csv of all issues (and each org/projects issues in their own CSV)
+
+## Extended example
+
 This is a poetry based project, if one already has poetry installed, running `poetry install; poetry shell` will be sufficient to deploy the needed dependencies for this to be run.
 
 This script assumes one has set `SNYK_TOKEN` and `SNYK_GROUP` environment variables to use for retrieval of all the CSVs for a specific group. 
